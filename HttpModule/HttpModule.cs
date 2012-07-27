@@ -18,7 +18,7 @@ namespace Alphashack.Graphdat.Agent
             SetupEventLog();
         }
 
-        private static void SetupEventLog()
+        internal static void SetupEventLog()
         {
             if (EventLog.SourceExists(EventLogSource))
             {
@@ -45,7 +45,7 @@ namespace Alphashack.Graphdat.Agent
             get { return "Graphdat"; }
         }
 
-        public void Logger(GraphdatLogType type, object user, string fmt, params object[] args)
+        public static void Logger(GraphdatLogType type, object user, string fmt, params object[] args)
         {
             EventLogEntryType logType;
             switch(type)
@@ -104,21 +104,21 @@ namespace Alphashack.Graphdat.Agent
 
             if (!httpContext.Items.Contains(ContextItemKey))
             {
-                Logger(GraphdatLogType.ErrorMessage, null, "Graphdat API not found in HttpContext");
+                Logger(GraphdatLogType.ErrorMessage, null, "Graphdat API not found in HttpContext.");
                 return;
             }
 
             var graphdat = httpContext.Items[ContextItemKey] as API;
             if (graphdat == null)
             {
-                Logger(GraphdatLogType.ErrorMessage, null, "Graphdat API not found (incorrect type) in HttpContext");
+                Logger(GraphdatLogType.ErrorMessage, null, "Graphdat API not found (incorrect type) in HttpContext.");
                 return;
             }
 
             API.Timer rootTimer;
             if(!graphdat.Context.Validate())
             {
-                if (!Properties.Settings.Default.Suppress_ContextPopAutomatic) Logger(GraphdatLogType.WarningMessage, null, "Popping context automatically, you have not ended each context you created, this might be an error (you can suppress this warning: Suppress_ContextPopAutomatic)");
+                if (!Properties.Settings.Default.Suppress_ContextPopAutomatic) Logger(GraphdatLogType.WarningMessage, null, "Popping context automatically, you have not ended each context you created, this might be an error (you can suppress this warning: Suppress_ContextPopAutomatic).");
                 rootTimer = graphdat.Context.Exit();
             }
             else
@@ -162,6 +162,16 @@ namespace Alphashack.Graphdat.Agent
 
             graphdat = api;
             return true;
+        }
+
+        public static IGraphdat SafeGetGraphdat()
+        {
+            IGraphdat graphdat;
+            if(!TryGetGraphdat(out graphdat))
+            {
+                graphdat = new ErrorGraphdat();
+            }
+            return graphdat;
         }
 
         public void Dispose()

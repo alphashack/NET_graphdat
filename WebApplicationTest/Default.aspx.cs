@@ -20,6 +20,7 @@ namespace WebApplicationTest
             graphdat.End();
             graphdat.Begin("B");
             Thread.Sleep(250);
+
         }
     }
 }

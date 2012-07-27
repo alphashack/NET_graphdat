@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ErrorGraphdat.cs" />
     <Compile Include="HttpModule.cs" />
     <Compile Include="IGraphdat.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

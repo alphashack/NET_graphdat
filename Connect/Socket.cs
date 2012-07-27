@@ -2,20 +2,18 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace NET_graphdat
+namespace Alphashack.Graphdat.Agent
 {
     internal class Socket
     {
-        private string _config;
+        private readonly string _config;
         private System.Net.Sockets.Socket _socket;
-        private bool _inited;
         private bool _lastwaserror;
         private bool _lastwritesuccess;
 
         public Socket(string config, LoggerDelegate logger, object logContext)
         {
             _config = config;
-            _inited = true;
         }
 
         public void Term(LoggerDelegate logger, object logContext)
@@ -29,7 +27,7 @@ namespace NET_graphdat
 
         public void Send(byte[] data, long datalen, LoggerDelegate logger, object logContext)
         {
-            if (!Check(logger, logContext)) return;
+            if (!Connect(logger, logContext)) return;
 
             try
             {
@@ -45,7 +43,7 @@ namespace NET_graphdat
                 }
                 _lastwaserror = false;
 
-                if (Graphdat.VerboseLogging)
+                if (Agent.Connect.VerboseLogging)
                 {
                     logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket sent {0} bytes to '{1}'", sent, _config);
                 }
@@ -68,20 +66,6 @@ namespace NET_graphdat
             }
         }
 
-        private bool Check(LoggerDelegate logger, object logContext)
-        {
-            if (!_inited)
-            {
-                if (!_lastwaserror)
-                {
-                    logger(GraphdatLogType.ErrorMessage, logContext, "graphdat error: not initialised");
-                    _lastwaserror = true;
-                }
-                return false;
-            }
-            return Connect(logger, logContext);
-        }
-
         private bool Connect(LoggerDelegate logger, object logContext)
         {
             if (_socket != null)
@@ -101,7 +85,7 @@ namespace NET_graphdat
                 //_socket.IOControl(IOControlCode.NonBlockingIO, BitConverter.GetBytes(1), null);
                 _socket.Blocking = false;
 
-                if (Graphdat.VerboseLogging)
+                if (Agent.Connect.VerboseLogging)
                 {
                     logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket connected '{0}'",
                            _config);
@@ -112,7 +96,7 @@ namespace NET_graphdat
             catch (Exception ex)
             {
                 Term(logger, logContext);
-                if (!_lastwaserror || Graphdat.VerboseLogging)
+                if (!_lastwaserror || Agent.Connect.VerboseLogging)
                 {
                     logger(GraphdatLogType.ErrorMessage, logContext,
                            "graphdat error: could not connect socket '{0}' - {1}", _config, ex.Message);

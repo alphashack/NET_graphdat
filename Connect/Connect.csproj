@@ -8,8 +8,8 @@
     <ProjectGuid>{AAE46F20-6A30-4DDF-AA04-3922C2741970}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NET_graphdat</RootNamespace>
-    <AssemblyName>NET_graphdat</AssemblyName>
+    <RootNamespace>Alphashack.Graphdat.Agent</RootNamespace>
+    <AssemblyName>GraphdatAgentConnect</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,8 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Graphdat.cs" />
-    <Compile Include="IGraphdat.cs" />
+    <Compile Include="Connect.cs" />
+    <Compile Include="IConnect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Socket.cs" />
   </ItemGroup>

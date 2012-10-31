@@ -64,7 +64,7 @@ namespace Alphashack.Graphdat.Agent
                           {
                               Type = "Sample",
                               Source = _source,
-                              Route = string.Format("{0} {1}", sample.Method, sample.Uri),
+                              Route = !string.IsNullOrEmpty(sample.Method) ? string.Format("{0} {1}", sample.Method, sample.Uri) : sample.Uri,
                               Timestamp = sample.Timestamp,
                               ResponseTime = sample.ResponseTime,
                               CpuTime = sample.CpuTime,

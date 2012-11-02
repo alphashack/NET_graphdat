@@ -9,12 +9,24 @@ namespace SqlQueryHelper
 {
     public static class Outliner
     {
+        // The types of statements to simplify
         private static readonly IList<Type> HandledStatementType = new[]
                                                                        {
+                                                                           typeof (DeleteStatement),
                                                                            typeof (SelectStatement),
-                                                                           typeof(UpdateStatement)
+                                                                           typeof (UpdateStatement),
+                                                                           typeof (InsertStatement),
+                                                                           typeof (FetchCursorStatement),
+                                                                           typeof (BulkInsertStatement),
+                                                                           typeof (ExecuteAsStatement),
+                                                                           typeof (ExecuteStatement),
+                                                                           typeof (InsertBulkStatement),
+                                                                           typeof (TruncateTableStatement),
+                                                                           typeof (UpdateStatisticsStatement),
+                                                                           typeof (UpdateTextStatement)
                                                                        };
 
+        // These tokens will have their values replaced by their type during simplification
         private static readonly IList<TSqlTokenType> ReplaceTokens = new[]
                                                                          {
                                                                              TSqlTokenType.AsciiStringLiteral,
@@ -23,6 +35,8 @@ namespace SqlQueryHelper
                                                                              TSqlTokenType.Integer,
                                                                              TSqlTokenType.Money
                                                                          };
+
+        // Chars to just remove from the end of the query
         private static readonly char[] RemoveChars = new [] {'\r', '\n', ';'};
 
         public static string FirstCommand(string query)
@@ -45,7 +59,13 @@ namespace SqlQueryHelper
             return true;
         }
 
-        public static bool ParseSql(string query, out string value)
+        /// <summary>
+        /// Simplifies a query by removing the value of certain types of token. Basically the ones that might be parameterised
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool TrySimplify(string query, out string value)
         {
             value = "";
 
@@ -53,16 +73,21 @@ namespace SqlQueryHelper
             IList<ParseError> errors;
             var result = parser.Parse(new StringReader(query), out errors);
 
+            // cannot parse, cannot simplify
             if(errors.Count > 0)
                 return false;
 
+            // without at least one batch with at least one statement, cannot simplify
+            // (should be 1 batch, 1 statement really as we are tracing StatementEnd)
             var script = result as TSqlScript;
             if (script == null || script.Batches.Count <= 0 && script.Batches[0].Statements.Count <= 0)
                 return false;
 
-            //if (!HandledStatementType.Contains(script.Batches[0].Statements[0].GetType()))
-            //    return false;
+            // only interested in certain types of statements (date manipulation ones)
+            if (!HandledStatementType.Contains(script.Batches[0].Statements[0].GetType()))
+                return false;
 
+            // basically remove all comments, newlines and extra whitespace
             var options = new SqlScriptGeneratorOptions
                               {
                                   AlignClauseBodies = false,
@@ -94,6 +119,7 @@ namespace SqlQueryHelper
             var summary = new StringBuilder();
             foreach (var token in tokens)
             {
+                // replace values for parameterisable token types
                 if(ReplaceTokens.Contains(token.TokenType))
                 {
                     summary.Append(token.TokenType);
@@ -103,7 +129,9 @@ namespace SqlQueryHelper
                     summary.Append(token.Text);
                 }
             }
+            // trim some junk
             value = summary.ToString().TrimEnd(RemoveChars);
+
             return true;
         }
     }

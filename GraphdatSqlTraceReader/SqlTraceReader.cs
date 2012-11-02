@@ -53,81 +53,105 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private void Worker()
         {
             var instances = new Dictionary<string, TraceInfo>();
+            int timeToWait;
 
             do
             {
-                var files = Directory.GetFiles(@"c:\tmp", @"graphdat*.trc");
-                var regex = new Regex(@"^c:\\tmp\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$");
-                foreach (var file in files)
+                var processingStart = Stopwatch.StartNew();
+
+                FindInstanceTraces(instances);
+
+                ReadInstanceTraces(instances);
+
+                // calculate time to wait
+                var elapsed = (int)processingStart.ElapsedMilliseconds;
+                timeToWait = Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep - elapsed;
+                if (timeToWait < 0) timeToWait = 0;
+            } while (!_termHandle.WaitOne(timeToWait));
+        }
+
+        private void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
+        {
+            var files = Directory.GetFiles(@"c:\tmp", @"graphdat*.trc");
+            var regex = new Regex(@"^c:\\tmp\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$");
+            foreach (var file in files)
+            {
+                var match = regex.Match(file);
+                if (!match.Success || !match.Groups["instanceName"].Success) continue;
+                var instanceName = match.Groups["instanceName"].Value;
+                var fileNumber = match.Groups["fileNumber"].Success
+                                     ? int.Parse(match.Groups["fileNumber"].Value)
+                                     : 0;
+
+                if (!instances.ContainsKey(instanceName))
                 {
-                    var match = regex.Match(file);
-                    if (!match.Success || !match.Groups["instanceName"].Success) continue;
-                    var instanceName = match.Groups["instanceName"].Value;
-                    var fileNumber = match.Groups["fileNumber"].Success
-                                         ? int.Parse(match.Groups["fileNumber"].Value)
-                                         : 0;
-
-                    if (!instances.ContainsKey(instanceName))
-                    {
-                        instances[instanceName] = new TraceInfo { MaxFileNumber = fileNumber };
-                    }
-                    else if (instances[instanceName].MaxFileNumber < fileNumber)
-                    {
-                        instances[instanceName].TraceRead = false;
-                        instances[instanceName].MaxFileNumber = fileNumber;
-                    }
+                    instances[instanceName] = new TraceInfo { MaxFileNumber = fileNumber };
                 }
-
-                foreach (var instance in instances)
+                else if (instances[instanceName].MaxFileNumber < fileNumber)
                 {
-                    if (instance.Value.TraceRead) continue;
-
-                    var fileNumberToRead = instance.Value.MaxFileNumber - 1;
-                    if (fileNumberToRead < 0) continue;
-
-                    var filename = string.Format("c:\\tmp\\graphdat_{0}{1}{2}.trc", instance.Key,
-                                                 fileNumberToRead > 0 ? "_" : "",
-                                                 fileNumberToRead > 0 ? fileNumberToRead.ToString() : "");
-
-                    var traceFile = new TraceFile();
-                    traceFile.InitializeAsReader(filename);
-
-                    var eventClassOrdinal = traceFile.GetOrdinal("EventClass");
-                    var eventSequenceOrdinal = traceFile.GetOrdinal("EventSequence");
-                    var textDataOrdinal = traceFile.GetOrdinal("TextData");
-                    var startTimeOrdinal = traceFile.GetOrdinal("StartTime");
-                    var durationOrdinal = traceFile.GetOrdinal("Duration");
-
-                    while (traceFile.Read())
-                    {
-                        var eventClass = traceFile.GetString(eventClassOrdinal);
-
-                        if (eventClass.Equals("trace start", StringComparison.InvariantCultureIgnoreCase)) continue;
-                        if (eventClass.Equals("trace stop", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            instance.Value.TraceRead = true;
-                            break;
-                        }
-
-                        var eventSequence = traceFile.GetInt64(eventSequenceOrdinal);
-                        if (instance.Value.MaxEventSequence >= eventSequence) continue;
-
-                        var textData = traceFile.GetString(textDataOrdinal);
-                        var startTime = traceFile.GetDateTime(startTimeOrdinal);
-                        var duration = traceFile.GetInt64(durationOrdinal) / 1000;
-
-                        string name;
-                        if(Outliner.ParseSql(textData, out name))
-                            _agentConnect.Store(new Sample
-                                                    {
-                                                        Uri = name,
-                                                        ResponseTime = duration,
-                                                        Timestamp = startTime.Ticks
-                                                    }, Logger);
-                    }
-                    traceFile.Close();
+                    instances[instanceName].TraceRead = false;
+                    instances[instanceName].MaxFileNumber = fileNumber;
                 }
-            } while (!_termHandle.WaitOne(Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep));
+            }
+        }
+
+        private void ReadInstanceTraces(Dictionary<string, TraceInfo> instances)
+        {
+            foreach (var instance in instances)
+            {
+                // has the trace been read already
+                if (instance.Value.TraceRead) continue;
+
+                // read the second last written trace, the last one is still in use by sql server
+                var fileNumberToRead = instance.Value.MaxFileNumber - 1;
+                if (fileNumberToRead < 0) continue;
+
+                var filename = string.Format("c:\\tmp\\graphdat_{0}{1}{2}.trc", instance.Key,
+                                             fileNumberToRead > 0 ? "_" : "",
+                                             fileNumberToRead > 0 ? fileNumberToRead.ToString() : "");
+
+                // does the file still exist
+                if (!File.Exists(filename)) continue;
+
+                // read the trace
+                ReadTraceFile(filename);
+                instance.Value.TraceRead = true;
+            }
+        }
+
+        private void ReadTraceFile(string filename)
+        {
+            var traceFile = new TraceFile();
+            traceFile.InitializeAsReader(filename);
+
+            var eventClassOrdinal = traceFile.GetOrdinal("EventClass");
+            var textDataOrdinal = traceFile.GetOrdinal("TextData");
+            var startTimeOrdinal = traceFile.GetOrdinal("StartTime");
+            var durationOrdinal = traceFile.GetOrdinal("Duration");
+
+            while (traceFile.Read())
+            {
+                var eventClass = traceFile.GetString(eventClassOrdinal);
+
+                // skip on start, end on stop
+                if (eventClass.Equals("trace start", StringComparison.InvariantCultureIgnoreCase)) continue;
+                if (eventClass.Equals("trace stop", StringComparison.InvariantCultureIgnoreCase)) break;
+
+                var textData = traceFile.GetString(textDataOrdinal);
+                var startTime = traceFile.GetDateTime(startTimeOrdinal);
+                var duration = traceFile.GetInt64(durationOrdinal) / 1000; // duration is in microseconds
+
+                // if the query simplified, send it to the agent
+                string name;
+                if (Outliner.TrySimplify(textData, out name))
+                    _agentConnect.Store(new Sample
+                    {
+                        Uri = name,
+                        ResponseTime = duration + 1000,
+                        Timestamp = startTime.Ticks
+                    }, Logger);
+            }
+            traceFile.Close();
         }
 
         private static void Logger(GraphdatLogType type, object user, string fmt, params object[] args)
@@ -158,7 +182,6 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
     internal class TraceInfo
     {
         public int MaxFileNumber;
-        public int MaxEventSequence;
         public bool TraceRead;
     }
 

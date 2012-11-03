@@ -14,6 +14,9 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         protected override void OnStart(string[] args)
         {
+            SqlTraceManager.Stopping += WorkerStopping;
+            SqlTraceReader.Stopping += WorkerStopping;
+
             SqlTraceManager.Start(EventLog);
             SqlTraceReader.Start(EventLog);
         }
@@ -22,6 +25,11 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         {
             SqlTraceManager.Stop();
             SqlTraceReader.Stop();
+        }
+
+        void WorkerStopping(object sender, System.EventArgs e)
+        {
+            Stop();
         }
     }
 }

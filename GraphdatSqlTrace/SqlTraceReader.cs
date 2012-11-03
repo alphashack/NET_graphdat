@@ -19,6 +19,14 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
 
+        public static event EventHandler Stopping;
+
+        private void InvokeStopping(EventArgs e)
+        {
+            var handler = Stopping;
+            if (handler != null) handler(this, e);
+        }
+
         public static void Start(EventLog eventLog)
         {
             if (_instance == null) _instance = new SqlTraceReader(eventLog);
@@ -31,14 +39,23 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private SqlTraceReader(EventLog eventLog)
         {
-            _eventLog = eventLog;
+            try
+            {
+                _eventLog = eventLog;
 
-            _agentConnect = new Connect();
-            _agentConnect.Init(Properties.Settings.Default.Port.ToString(), Properties.Settings.Default.Source, Logger);
+                _agentConnect = new Connect();
+                _agentConnect.Init(Properties.Settings.Default.Port.ToString(), Properties.Settings.Default.Source,
+                                   Logger);
 
-            _thread = new Thread(Worker) { IsBackground = true };
-            _termHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
-            _thread.Start();
+                _thread = new Thread(Worker) {IsBackground = true};
+                _termHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                _thread.Start();
+            }
+            catch (Exception ex)
+            {
+                _eventLog.WriteEntry(string.Format("SqlTraceReader failed to start due to exception. {0}", ex));
+                InvokeStopping(null);
+            }
         }
 
         private void Term()
@@ -52,25 +69,34 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private void Worker()
         {
-            var instances = new Dictionary<string, TraceInfo>();
-            int timeToWait;
-
-            do
+            try
             {
-                var processingStart = Stopwatch.StartNew();
+                var instances = new Dictionary<string, TraceInfo>();
+                int timeToWait;
 
-                FindInstanceTraces(instances);
+                do
+                {
+                    var processingStart = Stopwatch.StartNew();
 
-                ReadInstanceTraces(instances);
+                    FindInstanceTraces(instances);
 
-                // calculate time to wait
-                var elapsed = (int)processingStart.ElapsedMilliseconds;
-                timeToWait = Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep - elapsed;
-                if (timeToWait < 0) timeToWait = 0;
-            } while (!_termHandle.WaitOne(timeToWait));
+                    ReadInstanceTraces(instances);
+
+                    // calculate time to wait
+                    var elapsed = (int) processingStart.ElapsedMilliseconds;
+                    timeToWait = Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep - elapsed;
+                    if (timeToWait < 0) timeToWait = 0;
+                } while (!_termHandle.WaitOne(timeToWait));
+            }
+            catch (Exception ex)
+            {
+                _eventLog.WriteEntry(string.Format("SqlTraceReader worker exiting because of exception. {0}", ex));
+                _thread = null;
+                InvokeStopping(null);
+            }
         }
 
-        private void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
+        private static void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
         {
             var files = Directory.GetFiles(@"c:\tmp", @"graphdat*.trc");
             var regex = new Regex(@"^c:\\tmp\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$");
@@ -150,7 +176,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                     {
                         //Method = databaseName,
                         Uri = name,
-                        ResponseTime = duration + 1000,
+                        ResponseTime = duration,
                         Timestamp = startTime.Ticks
                     }, Logger);
             }

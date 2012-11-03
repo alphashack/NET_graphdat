@@ -19,6 +19,14 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
 
+        public static event EventHandler Stopping;
+
+        private void InvokeStopping(EventArgs e)
+        {
+            var handler = Stopping;
+            if (handler != null) handler(this, e);
+        }
+
         public static void Start(EventLog eventLog)
         {
             if (_instance == null) _instance = new SqlTraceManager(eventLog);
@@ -31,11 +39,19 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private SqlTraceManager(EventLog eventLog)
         {
-            _eventLog = eventLog;
+            try
+            {
+                _eventLog = eventLog;
 
-            _thread = new Thread(Worker) { IsBackground = true };
-            _termHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
-            _thread.Start();
+                _thread = new Thread(Worker) {IsBackground = true};
+                _termHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                _thread.Start();
+            }
+            catch (Exception ex)
+            {
+                _eventLog.WriteEntry(string.Format("SqlTraceManager failed to start due to exception. {0}", ex));
+                InvokeStopping(null);
+            }
         }
 
         private void Term()
@@ -54,36 +70,46 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private void Worker()
         {
-            int timeToWait;
-
-            do
+            try
             {
-                var processingStart = Stopwatch.StartNew();
+                int timeToWait;
 
-                foreach (var database in GetDatabases())
+                do
                 {
-                    var db = database.Value;
+                    var processingStart = Stopwatch.StartNew();
 
-                    var databaseLines = new StringBuilder();
-                    foreach (var catalog in db.Catalogs)
+                    foreach (var database in GetDatabases())
                     {
-                        databaseLines.AppendLine(string.Format(databaseLines.Length == 0 ? DatabaseFirstLine : DatabaseLine, catalog));
+                        var db = database.Value;
+
+                        var databaseLines = new StringBuilder();
+                        foreach (var catalog in db.Catalogs)
+                        {
+                            databaseLines.AppendLine(
+                                string.Format(databaseLines.Length == 0 ? DatabaseFirstLine : DatabaseLine, catalog));
+                        }
+                        var script = string.Format(InstanceScript, databaseLines);
+
+                        var conn = new SqlConnection(db.InstanceConnectionString);
+                        var server = new Server(new ServerConnection(conn));
+                        var result = server.ConnectionContext.ExecuteNonQuery(script);
                     }
-                    var script = string.Format(InstanceScript, databaseLines);
 
-                    var conn = new SqlConnection(db.InstanceConnectionString);
-                    var server = new Server(new ServerConnection(conn));
-                    var result = server.ConnectionContext.ExecuteNonQuery(script);
-                }
-
-                // calculate time to wait
-                var elapsed = (int)processingStart.ElapsedMilliseconds;
-                timeToWait = Properties.Settings.Default.SqlTraceManagerWorkerLoopSleep - elapsed;
-                if (timeToWait < 0) timeToWait = 0;
-            } while (!_termHandle.WaitOne(timeToWait));
+                    // calculate time to wait
+                    var elapsed = (int)processingStart.ElapsedMilliseconds;
+                    timeToWait = Properties.Settings.Default.SqlTraceManagerWorkerLoopSleep - elapsed;
+                    if (timeToWait < 0) timeToWait = 0;
+                } while (!_termHandle.WaitOne(timeToWait));
+            }
+            catch (Exception ex)
+            {
+                _eventLog.WriteEntry(string.Format("SqlTraceManager worker exiting because of exception. {0}", ex));
+                _thread = null;
+                InvokeStopping(null);
+            }
         }
 
-        private Dictionary<string, DatabaseInfo> GetDatabases()
+        private static Dictionary<string, DatabaseInfo> GetDatabases()
         {
             var databases = new Dictionary<string, DatabaseInfo>();
 
@@ -128,30 +154,6 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 }
             }
             return databases;
-        }
-
-        private static void Logger(GraphdatLogType type, object user, string fmt, params object[] args)
-        {
-            EventLogEntryType logType;
-            switch (type)
-            {
-                case GraphdatLogType.SuccessMessage:
-                    logType = EventLogEntryType.SuccessAudit;
-                    break;
-                case GraphdatLogType.ErrorMessage:
-                    logType = EventLogEntryType.Error;
-                    break;
-                case GraphdatLogType.WarningMessage:
-                    logType = EventLogEntryType.Warning;
-                    break;
-                case GraphdatLogType.InformationMessage:
-                    logType = EventLogEntryType.Information;
-                    break;
-                default:
-                    logType = EventLogEntryType.Error;
-                    break;
-            }
-            _instance._eventLog.WriteEntry(string.Format(fmt, args), logType);
         }
 
         private const string InstanceScript =

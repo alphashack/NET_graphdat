@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
+using System.Linq;
 
 namespace Alphashack.Graphdat.Agent.SqlTrace
 {
@@ -72,34 +73,45 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         {
             try
             {
-                int timeToWait;
-
-                do
+                var databases = GetDatabases();
+                if (databases.Count > 0)
                 {
-                    var processingStart = Stopwatch.StartNew();
+                    ReportDatabases(databases);
 
-                    foreach (var database in GetDatabases())
+                    int timeToWait;
+                    do
                     {
-                        var db = database.Value;
+                        var processingStart = Stopwatch.StartNew();
 
-                        var databaseLines = new StringBuilder();
-                        foreach (var catalog in db.Catalogs)
+                        foreach (var database in databases)
                         {
-                            databaseLines.AppendLine(
-                                string.Format(databaseLines.Length == 0 ? DatabaseFirstLine : DatabaseLine, catalog));
+                            var db = database.Value;
+
+                            var databaseLines = new StringBuilder();
+                            foreach (var catalog in db.Catalogs)
+                            {
+                                databaseLines.AppendLine(
+                                    string.Format(databaseLines.Length == 0 ? DatabaseFirstLine : DatabaseLine, catalog));
+                            }
+                            var script = string.Format(InstanceScript, databaseLines);
+
+                            var conn = new SqlConnection(db.InstanceConnectionString);
+                            var server = new Server(new ServerConnection(conn));
+                            var result = server.ConnectionContext.ExecuteNonQuery(script);
                         }
-                        var script = string.Format(InstanceScript, databaseLines);
 
-                        var conn = new SqlConnection(db.InstanceConnectionString);
-                        var server = new Server(new ServerConnection(conn));
-                        var result = server.ConnectionContext.ExecuteNonQuery(script);
-                    }
-
-                    // calculate time to wait
-                    var elapsed = (int)processingStart.ElapsedMilliseconds;
-                    timeToWait = Properties.Settings.Default.SqlTraceManagerWorkerLoopSleep - elapsed;
-                    if (timeToWait < 0) timeToWait = 0;
-                } while (!_termHandle.WaitOne(timeToWait));
+                        // calculate time to wait
+                        var elapsed = (int) processingStart.ElapsedMilliseconds;
+                        timeToWait = Properties.Settings.Default.SqlTraceManagerWorkerLoopSleep - elapsed;
+                        if (timeToWait < 0) timeToWait = 0;
+                    } while (!_termHandle.WaitOne(timeToWait));
+                }
+                else
+                {
+                    _eventLog.WriteEntry(string.Format("SqlTraceManager worker exiting, no databases to monitor."));
+                    _thread = null;
+                    InvokeStopping(null);
+                }
             }
             catch (Exception ex)
             {
@@ -107,6 +119,25 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 _thread = null;
                 InvokeStopping(null);
             }
+        }
+
+        private void ReportDatabases(ICollection<KeyValuePair<string, DatabaseInfo>> databases)
+        {
+            var list = new StringBuilder();
+            var databaseCount = 0;
+            foreach(var database in databases)
+            {
+                var db = database.Value;
+                var instance = db.DataSource;
+                foreach (var catalog in db.Catalogs)
+                {
+                    list.AppendFormat("{2}{0}.{1}", instance, catalog, databaseCount != 0 ? ", " : "");
+                    databaseCount++;
+                }
+            }
+
+            var report = string.Format("Monitoring {0} instance{1}, {2} database{3}: {4}", databases.Count, databases.Count != 1 ? "s" : "", databaseCount, databaseCount != 1 ? "s" : "", list);
+            _eventLog.WriteEntry(report);
         }
 
         private static Dictionary<string, DatabaseInfo> GetDatabases()
@@ -153,6 +184,13 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                         break;
                 }
             }
+
+            var noCatalog = databases.Where(dbi => dbi.Value.Catalogs.Count == 0).ToList();
+            foreach (var database in noCatalog)
+            {
+                databases.Remove(database.Key);
+            }
+
             return databases;
         }
 
@@ -174,6 +212,7 @@ set nocount on
 
 declare @databaseNames table (name nvarchar(64), done bit)
 declare @databaseName nvarchar(64)
+declare @logicalOperator int
 
 -- Add your database names here
 insert @databaseNames
@@ -228,13 +267,16 @@ exec sp_trace_setevent @TraceID, 41, 18, @on
 exec sp_trace_setevent @TraceID, 41, 35, @on
 exec sp_trace_setevent @TraceID, 41, 51, @on
 
+set @logicalOperator = 0
+
 -- Set the db name filters
 while exists(select * from @databaseNames where done = 0)
 begin
 	select top 1 @databaseName = name from @databaseNames where done = 0
 	
-	exec sp_trace_setfilter @TraceID, 35, 0, 6, @databaseName
-	
+	exec sp_trace_setfilter @TraceID, 35, 1, 6, @databaseName
+	set @logicalOperator = 1
+
 	update @databaseNames set done = 1 where done = 0 and name = @databaseName
 end
 

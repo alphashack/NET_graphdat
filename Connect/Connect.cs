@@ -9,7 +9,7 @@ namespace Alphashack.Graphdat.Agent
 {
     public class Connect : IConnect
     {
-        public const bool VerboseLogging = false;
+        public const bool VerboseLogging = true;
         private const int GraphdatWorkerLoopSleep = 100;
 
         private string _source;
@@ -29,6 +29,11 @@ namespace Alphashack.Graphdat.Agent
             public IList<Context> Context;
             internal LoggerDelegate Logger;
             internal object LogContext;
+
+            public override string ToString()
+            {
+                return String.Format("type => {0}, Souce => {1}, Route => {2}, ResponseTime => {3}", Type, Source, Route, ResponseTime);
+            }
         };
 
         public void Init(string config, string source, LoggerDelegate logger, object logContext = null)

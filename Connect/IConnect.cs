@@ -18,6 +18,7 @@ namespace Alphashack.Graphdat.Agent
         public long Timestamp;
         public double ResponseTime;
         public double CpuTime;
+        public int CallCount;
     };
 
     public class Sample

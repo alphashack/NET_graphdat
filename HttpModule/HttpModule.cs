@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Web;
 using System.Linq;
+using System.Dynamic;
+using System.Collections.Generic;
 
 namespace Alphashack.Graphdat.Agent
 {
@@ -130,22 +132,30 @@ namespace Alphashack.Graphdat.Agent
             var context = graphdat.Context.Flatten(build);
 
             // Send the sample
-            _agentConnect.Store(new Sample
-                                    {
-                                        Method = httpContext.Request.HttpMethod,
-                                        Uri = httpContext.Request.Url.AbsoluteUri,
-                                        Timestamp = rootTimer.Timestamp,
-                                        ResponseTime = rootTimer.Milliseconds,
-                                        CpuTime = 0,
-                                        Context = context.Select((dynamic obj) => new Context
-                                                                                      {
-                                                                                          Name = obj.Name,
-                                                                                          Timestamp = obj.Timestamp,
-                                                                                          ResponseTime = obj.ResponseTime,
-                                                                                          CpuTime = obj.CpuTime
-                                                                                      }).ToArray()
-                                    },
-                                    Logger);
+            var contexts = context.Select((dynamic obj) => new Context {
+                Name = obj.Name,
+                Timestamp = obj.Timestamp,
+                ResponseTime = obj.ResponseTime,
+                CpuTime = obj.CpuTime,
+                CallCount = GetCallCount(context, obj.Name)
+            });
+
+            var sample = new Sample {
+                 Method = httpContext.Request.HttpMethod,
+                 Uri = httpContext.Request.Url.AbsoluteUri,
+                 Host = httpContext.Request.Url.Host,
+                 Timestamp = rootTimer.Timestamp,
+                 ResponseTime = rootTimer.Milliseconds,
+                 CpuTime = 0,
+                 Context = contexts.ToArray()
+             };
+
+            _agentConnect.Store(sample, Logger);
+        }
+
+        public int GetCallCount(List<ExpandoObject> context, string name) 
+        {
+            return context.Count((dynamic obj) => obj.Name == name);
         }
 
         public static bool TryGetGraphdat(out IGraphdat graphdat)

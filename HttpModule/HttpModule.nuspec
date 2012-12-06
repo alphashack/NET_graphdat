@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Graphdat</id>
+    <version>1.6</version>
+    <title>Graphdat SDK</title>
+    <authors>David Clark, Pete Diemert, Gareth Stokes</authors>
+    <owners>Gareth Stokes</owners>
+    <projectUrl>http://www.graphdat.com</projectUrl>
+    <iconUrl>http://dashboard.graphdat.com/images/box-logo.gif</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Graphdat SDK library</description>
+    <releaseNotes>
+      Asp.net HttpModule.
+    </releaseNotes>
+    <copyright>Copyright 2012</copyright>
+    <tags>Graphdat Profiler Monitoring</tags>
+  </metadata>
+</package>

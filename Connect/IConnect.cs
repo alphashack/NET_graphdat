@@ -25,6 +25,7 @@ namespace Alphashack.Graphdat.Agent
     {
         public string Method;
         public string Uri;
+        public string Host;
         public double Timestamp;
         public double ResponseTime;
         public double CpuTime;

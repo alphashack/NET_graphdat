@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Graphdat</id>
-    <version>1.5</version>
+    <version>1.6</version>
     <title>Graphdat SDK</title>
     <authors>David Clark, Pete Diemert, Gareth Stokes</authors>
     <owners>Gareth Stokes</owners>

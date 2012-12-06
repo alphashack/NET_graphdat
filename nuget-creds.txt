@@ -1,0 +1,7 @@
+user: support@alphashack.com
+pass: we8the4kin$
+api: f8a33975-cfaa-4e5c-93b8-35ce0a6deb69
+
+cd HttpModule
+nuget pack HttpModule.csproj -Prop Configuration=Release
+NuGet Push Graphdat.X.x.nupkg

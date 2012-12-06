@@ -132,7 +132,7 @@ namespace Alphashack.Graphdat.Agent
             var context = graphdat.Context.Flatten(build);
 
             // Send the sample
-            var ctx = context.Select((dynamic obj) => new Context {
+            var contexts = context.Select((dynamic obj) => new Context {
                 Name = obj.Name,
                 Timestamp = obj.Timestamp,
                 ResponseTime = obj.ResponseTime,
@@ -143,10 +143,11 @@ namespace Alphashack.Graphdat.Agent
             var sample = new Sample {
                  Method = httpContext.Request.HttpMethod,
                  Uri = httpContext.Request.Url.AbsoluteUri,
+                 Host = httpContext.Request.Url.Host,
                  Timestamp = rootTimer.Timestamp,
                  ResponseTime = rootTimer.Milliseconds,
                  CpuTime = 0,
-                 Context = ctx.ToArray()
+                 Context = contexts.ToArray()
              };
 
             _agentConnect.Store(sample, Logger);

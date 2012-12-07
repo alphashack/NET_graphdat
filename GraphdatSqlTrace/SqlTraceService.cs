@@ -1,4 +1,5 @@
-﻿using System.ServiceProcess;
+﻿using System;
+using System.ServiceProcess;
 
 namespace Alphashack.Graphdat.Agent.SqlTrace
 {
@@ -27,9 +28,15 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             SqlTraceReader.Stop();
         }
 
-        void WorkerStopping(object sender, System.EventArgs e)
+        void WorkerStopping(object sender, StoppingEventArgs e)
         {
+            ExitCode = 1066;
             Stop();
+        }
+
+        public class StoppingEventArgs : EventArgs
+        {
+            public string Reason;
         }
     }
 }

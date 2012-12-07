@@ -14,25 +14,29 @@ Sends the data to the graphdat agent.
 
 Configuration:
 
-The trace script needs to be run once on each instance (each unique DataSource in your connection strings). The script will be customised to filter the trace by database name (each unique InitialCatalog in your connection strings)
+Modify the .config file to specify the connection strings for each database you wish to monitor.
 
-Edit the App.config file and put in two types of connection strings:
+The trace will be run once on each MS SQL instance (each unique DataSource in your connection strings). The trace will be customised by the service to filter the trace by database name (each unique InitialCatalog in your connection strings)
 
-Instance connection strings - we will use this connection string to actually connect to each instance (DataSource). These connection strings should be named starting with "Instance" e.g. Instance01. The InitialCatalog specified is not important, but I would reccommend just using master.
+Edit the .config file and put in two types of connection strings in the ConnectionStrings section:
 
-Database connection strings - a filter will be added for each database (InitialCatalog) specified when it is run on the instance (DataSource). These connection strings should be named starting with "Database" e.g. Database01. The credential (etc.) need not work, we will not be using this connection string, but the DataSource must match one of the Instance connection string's DataSource, and the InitialCatalog needs to be specified.
+Instance connection strings - A database to connect to and start the trace: we will use this connection string to actually connect to each instance (DataSource). These connection strings should be named starting with "Instance" e.g. Instance01. The InitialCatalog specified is not important, but we reccommend just using master.
+
+Database connection strings - A database to collect data from: a filter will be added to the trace for each database (InitialCatalog) specified when it is run on the instance (DataSource). These connection strings should be named starting with "Database" e.g. Database01. The credential (etc.) need not work, we will not be using this connection string, but the DataSource must match one of the Instance connection string's DataSource, and the InitialCatalog needs to be specified.
 
 ----
 
 Intallation:
 
-Sql Tracing can only be done from a 32 bit program. The windows service is therefore a 32 bit program. As such it must be installed using the correct 32 bit installutil. This can be done like this:
+Run the installer - GraphdatSqlTraceSetup.exe
 
-c:\Windows\Microsoft.NET\Framework\v4.0.30319\InstallUtil.exe ./GraphdatAgentSqlTraceReader.exe
+During the install you will be asked to modify the .config file, see above for details on how to do that.
 
 ----
 
-Starting and Stopping the service
+Starting and Stopping the service:
+
+The service will start automatically after install and on system reboot. You can also stop and start it manually:
 
 net start graphdat-sqltrace
 
@@ -40,17 +44,31 @@ net stop graphdat-sqltrace
 
 ----
 
+Logging:
+
+The service will log startup and shutdown message and any error messages to the Windows Event Log Application Log
+
+----
+
 Notes:
+
+The service runs as "Local Service", it is possible to add this user to your database (with appropriate permissions to execute sys.fn_trace_getinfo, sp_trace_setstatus and sp_trace_create)
 
 Each trace file (even an empty one) will be 1MB. Therefore if you increase the frequency of trace rollover, you will affect the disk r/w stats badly.
 
-We are cheating a bit to get this data into the "request response time" graph. We are sending the DatabaseName as Method and the Query as Uri so in the graph you will see "DatabaseName : Query"
+We are sending the DatabaseName as Method and the Query as Uri so in the graph you will see "DatabaseName : Query"
+
+----
+
+Uninstallation:
+
+There is an uninstall.exe file in the service's directory in program files. Usually: "C:\Program Files(x64)\Alphashack\Graphdat SqlTrace Service"
 
 ----
 
 Issues:
 
-I could not find a reliable way to test the sql script execution for success... ExecuteNonQuery is supposed to return -1 but it seems to like returning -2... I have just left it for now and failure will be silent.
+I could not find a reliable way to test the sql script execution for success... ExecuteNonQuery is supposed to return -1 but it seems to like returning -2 most of the time but returns -1 when it fails... I have just left it for now and failure will be silent.
 
 Trace start and stop messages are send to the windows event log thus filling the event log (possibly the sql log also). Perhaps there is a way to turn this off? You can turn off event logging altogether by starting the sql server instance with the -n argument but this is probably not what we want.
 

@@ -9,7 +9,7 @@ namespace Alphashack.Graphdat.Agent
 {
     public class Connect : IConnect
     {
-        public const bool VerboseLogging = true;
+        public const bool VerboseLogging = false;
         private const int GraphdatWorkerLoopSleep = 100;
 
         private string _source;

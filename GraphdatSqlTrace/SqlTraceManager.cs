@@ -20,9 +20,9 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
 
-        public static event EventHandler Stopping;
+        public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
-        private void InvokeStopping(EventArgs e)
+        private void InvokeStopping(SqlTraceService.StoppingEventArgs e)
         {
             var handler = Stopping;
             if (handler != null) handler(this, e);
@@ -38,6 +38,14 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             if (_instance != null) _instance.Term();
         }
 
+        private void Exit(string message)
+        {
+            _eventLog.WriteEntry(message);
+            _thread = null;
+            _instance = null;
+            InvokeStopping(new SqlTraceService.StoppingEventArgs { Reason = message });
+        }
+
         private SqlTraceManager(EventLog eventLog)
         {
             try
@@ -50,8 +58,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
             catch (Exception ex)
             {
-                _eventLog.WriteEntry(string.Format("SqlTraceManager failed to start due to exception. {0}", ex));
-                InvokeStopping(null);
+                Exit(string.Format("SqlTraceManager failed to start due to exception. {0}", ex));
             }
         }
 
@@ -63,10 +70,18 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
             foreach (var database in GetDatabases())
             {
-                var conn = new SqlConnection(database.Value.InstanceConnectionString);
-                var server = new Server(new ServerConnection(conn));
-                var result = server.ConnectionContext.ExecuteNonQuery(StopScript);
+                try
+                {
+                    var conn = new SqlConnection(database.Value.InstanceConnectionString);
+                    var server = new Server(new ServerConnection(conn));
+                    var result = server.ConnectionContext.ExecuteNonQuery(StopScript);
+                }
+                catch
+                {
+                }
             }
+
+            _instance = null;
         }
 
         private void Worker()
@@ -108,16 +123,12 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 }
                 else
                 {
-                    _eventLog.WriteEntry(string.Format("SqlTraceManager worker exiting, no databases to monitor."));
-                    _thread = null;
-                    InvokeStopping(null);
+                    Exit(string.Format("SqlTraceManager worker exiting, no databases to monitor."));
                 }
             }
             catch (Exception ex)
             {
-                _eventLog.WriteEntry(string.Format("SqlTraceManager worker exiting because of exception. {0}", ex));
-                _thread = null;
-                InvokeStopping(null);
+                Exit(string.Format("SqlTraceManager worker exiting because of exception. {0}", ex));
             }
         }
 

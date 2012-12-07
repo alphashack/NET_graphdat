@@ -54,10 +54,8 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Data" />
     <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
@@ -80,13 +78,14 @@
   <ItemGroup>
     <None Include="app.config">
       <SubType>Designer</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="README.md" />
+    <Content Include="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Connect\Connect.csproj">
@@ -99,7 +98,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="graphdat_trace_2005.sql" />
+    <None Include="graphdat_trace_2005.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

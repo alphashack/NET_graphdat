@@ -19,9 +19,9 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
 
-        public static event EventHandler Stopping;
+        public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
-        private void InvokeStopping(EventArgs e)
+        private void InvokeStopping(SqlTraceService.StoppingEventArgs e)
         {
             var handler = Stopping;
             if (handler != null) handler(this, e);
@@ -35,6 +35,19 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         public static void Stop()
         {
             if (_instance != null) _instance.Term();
+        }
+
+        private void Exit(string message)
+        {
+            _eventLog.WriteEntry(message);
+            _thread = null;
+            _instance = null;
+            InvokeStopping(new SqlTraceService.StoppingEventArgs { Reason = message });
+        }
+
+        private static void LogEvent(string message, EventLogEntryType logType)
+        {
+            if (_instance != null) _instance._eventLog.WriteEntry(message, logType);
         }
 
         private SqlTraceReader(EventLog eventLog)
@@ -53,8 +66,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
             catch (Exception ex)
             {
-                _eventLog.WriteEntry(string.Format("SqlTraceReader failed to start due to exception. {0}", ex));
-                InvokeStopping(null);
+                Exit(string.Format("SqlTraceReader failed to start due to exception. {0}", ex));
             }
         }
 
@@ -65,6 +77,8 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             if (_termHandle != null) _termHandle.Set();
             if (_thread != null) _thread.Join();
             _thread = null;
+
+            _instance = null;
         }
 
         private void Worker()
@@ -90,9 +104,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
             catch (Exception ex)
             {
-                _eventLog.WriteEntry(string.Format("SqlTraceReader worker exiting because of exception. {0}", ex));
-                _thread = null;
-                InvokeStopping(null);
+                Exit(string.Format("SqlTraceReader worker exiting because of exception. {0}", ex));
             }
         }
 
@@ -204,7 +216,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                     logType = EventLogEntryType.Error;
                     break;
             }
-            _instance._eventLog.WriteEntry(string.Format(fmt, args), logType);
+            LogEvent(string.Format(fmt, args), logType);
         }
     }
 

@@ -15,7 +15,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             _serviceProcessInstaller = new ServiceProcessInstaller();
             _serviceInstaller = new ServiceInstaller();
 
-            _serviceProcessInstaller.Account = ServiceAccount.LocalSystem;
+            _serviceProcessInstaller.Account = ServiceAccount.LocalService;
             _serviceInstaller.StartType = ServiceStartMode.Automatic;
             _serviceInstaller.ServiceName = Constants.ServiceName;
 

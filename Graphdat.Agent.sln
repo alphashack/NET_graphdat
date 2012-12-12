@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphdatSqlTrace", "Graphda
 EndProject
 Project("{040ECBDE-118F-47B7-BE98-E6E3FFCE59D0}") = "SqlTraceInstaller", "SqlTraceInstaller\SqlTraceInstaller.nsisproj", "{8F6BE5A9-6D90-415F-86DE-D575987BACF8}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup1", "Setup1\Setup1.vdproj", "{5D5686E0-63F0-4206-9EB9-E23549232DF2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CodeAnalysis|Any CPU = CodeAnalysis|Any CPU
@@ -449,30 +447,6 @@ Global
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|Win32.ActiveCfg = Release|x86
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|x86.ActiveCfg = Release|x86
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|x86.Build.0 = Release|x86
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CodeAnalysis|Any CPU.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CodeAnalysis|Mixed Platforms.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CodeAnalysis|Win32.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CodeAnalysis|x86.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CoreProfile|Any CPU.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CoreProfile|Mixed Platforms.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CoreProfile|Win32.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.CoreProfile|x86.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Debug|Any CPU.ActiveCfg = Debug
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Debug|Mixed Platforms.ActiveCfg = Debug
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Debug|Win32.ActiveCfg = Debug
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Debug|x86.ActiveCfg = Debug
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Instrument|Any CPU.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Instrument|Mixed Platforms.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Instrument|Win32.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Instrument|x86.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.PerformanceTest|Any CPU.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.PerformanceTest|Mixed Platforms.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.PerformanceTest|Win32.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.PerformanceTest|x86.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Release|Any CPU.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Release|Mixed Platforms.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Release|Win32.ActiveCfg = Release
-		{5D5686E0-63F0-4206-9EB9-E23549232DF2}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

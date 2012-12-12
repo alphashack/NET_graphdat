@@ -122,7 +122,7 @@ namespace SqlQueryHelper
                 // replace values for parameterisable token types
                 if(ReplaceTokens.Contains(token.TokenType))
                 {
-                    summary.Append(token.TokenType);
+                    summary.Append("?");
                 }
                 else
                 {

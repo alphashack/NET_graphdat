@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using Microsoft.SqlServer.Management.Common;
@@ -19,6 +21,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
+        private string _workDirectory;
 
         public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
@@ -28,9 +31,9 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             if (handler != null) handler(this, e);
         }
 
-        public static void Start(EventLog eventLog)
+        public static void Start(EventLog eventLog, string workDirectory)
         {
-            if (_instance == null) _instance = new SqlTraceManager(eventLog);
+            if (_instance == null) _instance = new SqlTraceManager(eventLog, workDirectory);
         }
 
         public static void Stop()
@@ -40,17 +43,18 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private void Exit(string message)
         {
-            _eventLog.WriteEntry(message);
+            _eventLog.WriteEntry(message, EventLogEntryType.Error);
             _thread = null;
             _instance = null;
             InvokeStopping(new SqlTraceService.StoppingEventArgs { Reason = message });
         }
 
-        private SqlTraceManager(EventLog eventLog)
+        private SqlTraceManager(EventLog eventLog, string workDirectory)
         {
             try
             {
                 _eventLog = eventLog;
+                _workDirectory = workDirectory;
 
                 _thread = new Thread(Worker) {IsBackground = true};
                 _termHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
@@ -74,7 +78,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 {
                     var conn = new SqlConnection(database.Value.InstanceConnectionString);
                     var server = new Server(new ServerConnection(conn));
-                    var result = server.ConnectionContext.ExecuteNonQuery(StopScript);
+                    var result = server.ConnectionContext.ExecuteNonQuery(string.Format(StopScript, _workDirectory));
                 }
                 catch
                 {
@@ -92,6 +96,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 if (databases.Count > 0)
                 {
                     ReportDatabases(databases);
+                    DeleteOldTraces(_workDirectory);
 
                     int timeToWait;
                     do
@@ -108,7 +113,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                                 databaseLines.AppendLine(
                                     string.Format(databaseLines.Length == 0 ? DatabaseFirstLine : DatabaseLine, catalog));
                             }
-                            var script = string.Format(InstanceScript, databaseLines);
+                            var script = string.Format(InstanceScript, _workDirectory, databaseLines);
 
                             var conn = new SqlConnection(db.InstanceConnectionString);
                             var server = new Server(new ServerConnection(conn));
@@ -129,6 +134,21 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             catch (Exception ex)
             {
                 Exit(string.Format("SqlTraceManager worker exiting because of exception. {0}", ex));
+            }
+        }
+         
+        private void DeleteOldTraces(string dir)
+        {
+            foreach(var trace in Directory.EnumerateFiles(dir, "graphdat_*.trc"))
+            {
+                try
+                {
+                    File.Delete(trace);
+                }
+                catch(Exception ex)
+                {
+                    _eventLog.WriteEntry(string.Format("Failed to delete old trace file ({0}). {1}", trace, ex.Message), EventLogEntryType.Warning);
+                }
             }
         }
 
@@ -216,7 +236,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 * Creates a new trace.
 *
 * Notes:
-* The trace file(s) will be named like: c:\tmp\graphdat_[INSTANCE NAME]_n.trc
+* The trace file(s) will be named like: {0}\graphdat_[INSTANCE NAME]_n.trc
 */
 
 set nocount on
@@ -227,16 +247,16 @@ declare @logicalOperator int
 
 -- Add your database names here
 insert @databaseNames
-{0}
+{1}
 
 declare @rc int
 declare @doing nvarchar(128)
 declare @TraceID int
-declare @filename nvarchar(32)
+declare @filename nvarchar(1024)
 declare @maxfilesize bigint
 declare @keepfiles int
 
-set @filename = N'c:\tmp\graphdat_' + @@servicename
+set @filename = N'{0}\graphdat_' + @@servicename
 set @maxfilesize = 10
 set @keepfiles = 5
 
@@ -321,9 +341,9 @@ set nocount on
 declare @rc int
 declare @doing nvarchar(128)
 declare @TraceID int
-declare @filename nvarchar(32)
+declare @filename nvarchar(1024)
 
-set @filename = N'c:\tmp\graphdat_' + @@servicename
+set @filename = N'{0}\graphdat_' + @@servicename
 
 set @doing = N'Find existing trace'
 select @TraceID = traceid from sys.fn_trace_getinfo(0) where property = 2 and cast(value as varchar(1024)) like @filename + N'%.trc';

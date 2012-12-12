@@ -18,6 +18,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
+        private string _workDirectory;
 
         public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
@@ -27,9 +28,9 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             if (handler != null) handler(this, e);
         }
 
-        public static void Start(EventLog eventLog)
+        public static void Start(EventLog eventLog, string workDirectory)
         {
-            if (_instance == null) _instance = new SqlTraceReader(eventLog);
+            if (_instance == null) _instance = new SqlTraceReader(eventLog, workDirectory);
         }
 
         public static void Stop()
@@ -50,11 +51,12 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             if (_instance != null) _instance._eventLog.WriteEntry(message, logType);
         }
 
-        private SqlTraceReader(EventLog eventLog)
+        private SqlTraceReader(EventLog eventLog, string workDirectory)
         {
             try
             {
                 _eventLog = eventLog;
+                _workDirectory = workDirectory;
 
                 _agentConnect = new Connect();
                 _agentConnect.Init(Properties.Settings.Default.Port.ToString(), Properties.Settings.Default.Source,
@@ -86,10 +88,14 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             try
             {
                 var instances = new Dictionary<string, TraceInfo>();
-                int timeToWait;
+                int timeToWait = Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep;
+
+                bool dont = true;
 
                 do
                 {
+                    if (dont) continue;
+
                     var processingStart = Stopwatch.StartNew();
 
                     FindInstanceTraces(instances);
@@ -108,10 +114,10 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
         }
 
-        private static void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
+        private void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
         {
-            var files = Directory.GetFiles(@"c:\tmp", @"graphdat*.trc");
-            var regex = new Regex(@"^c:\\tmp\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$");
+            var files = Directory.GetFiles(_workDirectory, @"graphdat*.trc");
+            var regex = new Regex(string.Format(@"^{0}\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$", _workDirectory.Replace(@"\", @"\\")));
             foreach (var file in files)
             {
                 var match = regex.Match(file);
@@ -144,9 +150,11 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 var fileNumberToRead = instance.Value.MaxFileNumber - 1;
                 if (fileNumberToRead < 0) continue;
 
-                var filename = string.Format("c:\\tmp\\graphdat_{0}{1}{2}.trc", instance.Key,
-                                             fileNumberToRead > 0 ? "_" : "",
-                                             fileNumberToRead > 0 ? fileNumberToRead.ToString() : "");
+                var filename = string.Format(string.Format("{0}\\graphdat_{1}{2}{3}.trc",
+                    _workDirectory.Replace(@"\", @"\\"),
+                    instance.Key,
+                    fileNumberToRead > 0 ? "_" : "",
+                    fileNumberToRead > 0 ? fileNumberToRead.ToString() : ""));
 
                 // does the file still exist
                 if (!File.Exists(filename)) continue;

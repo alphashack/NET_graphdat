@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using System.ServiceProcess;
 
 namespace Alphashack.Graphdat.Agent.SqlTrace
@@ -18,8 +20,10 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             SqlTraceManager.Stopping += WorkerStopping;
             SqlTraceReader.Stopping += WorkerStopping;
 
-            SqlTraceManager.Start(EventLog);
-            SqlTraceReader.Start(EventLog);
+            var workDir = GetWorkDir();
+
+            SqlTraceManager.Start(EventLog, workDir);
+            SqlTraceReader.Start(EventLog, workDir);
         }
 
         protected override void OnStop()
@@ -38,5 +42,12 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         {
             public string Reason;
         }
+
+        private static string GetWorkDir()
+        {
+            var exe = new FileInfo(Assembly.GetExecutingAssembly().Location);
+            return exe.DirectoryName;
+        }
+
     }
 }

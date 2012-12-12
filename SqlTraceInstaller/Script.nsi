@@ -142,6 +142,22 @@ SetCompressor /SOLID LZMA
 		File "..\GraphdatSqlTrace\bin\Debug\MsgPack.dll"
 		File "..\GraphdatSqlTrace\bin\Debug\SqlQueryHelper.dll"
 
+		File "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Microsoft.Data.Schema.ScriptDom.dll"
+		File "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Microsoft.Data.Schema.ScriptDom.Sql.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.ConnectionInfo.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.ConnectionInfoExtended.dll"
+		File "C:\Windows\assembly\GAC_MSIL\Microsoft.SqlServer.Diagnostics.STrace\10.0.0.0__89845dcd8080cc91\Microsoft.SqlServer.Diagnostics.STrace.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.Dmf.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.Management.Sdk.Sfc.dll"
+		File "C:\Windows\assembly\GAC_MSIL\Microsoft.SqlServer.Management.SmoMetadataProvider\10.0.0.0__89845dcd8080cc91\Microsoft.SqlServer.Management.SmoMetadataProvider.dll"
+		File "C:\Windows\assembly\GAC_MSIL\Microsoft.SqlServer.Management.SqlParser\10.0.0.0__89845dcd8080cc91\Microsoft.SqlServer.Management.SqlParser.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.ServiceBrokerEnum.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.Smo.dll"
+		File "C:\Windows\assembly\GAC_MSIL\Microsoft.SqlServer.SqlClrProvider\10.0.0.0__89845dcd8080cc91\Microsoft.SqlServer.SqlClrProvider.dll"
+		File "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies\Microsoft.SqlServer.SqlEnum.dll"
+
+		File "C:\Windows\assembly\GAC_MSIL\Microsoft.SqlServer.Instapi\10.0.0.0__89845dcd8080cc91\Microsoft.SqlServer.InstApi.dll"
+
 		; Write the uninstall keys for Windows
 		WriteRegStr   HKLM "${PRODUCT_UNINSTALL}" "DisplayName"     "${PRODUCT_NAME}"
 		WriteRegStr   HKLM "${PRODUCT_UNINSTALL}" "DisplayIcon"     "$INSTDIR\${PROGRAM_NAME}"

@@ -4,12 +4,11 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
-using System.Linq;
 
 namespace Alphashack.Graphdat.Agent.SqlTrace
 {
@@ -21,7 +20,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
-        private string _workDirectory;
+        private readonly string _workDirectory;
 
         public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
@@ -96,7 +95,6 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 if (databases.Count > 0)
                 {
                     ReportDatabases(databases);
-                    DeleteOldTraces(_workDirectory);
 
                     int timeToWait;
                     do
@@ -137,21 +135,6 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
         }
          
-        private void DeleteOldTraces(string dir)
-        {
-            foreach(var trace in Directory.EnumerateFiles(dir, "graphdat_*.trc"))
-            {
-                try
-                {
-                    File.Delete(trace);
-                }
-                catch(Exception ex)
-                {
-                    _eventLog.WriteEntry(string.Format("Failed to delete old trace file ({0}). {1}", trace, ex.Message), EventLogEntryType.Warning);
-                }
-            }
-        }
-
         private void ReportDatabases(ICollection<KeyValuePair<string, DatabaseInfo>> databases)
         {
             var list = new StringBuilder();

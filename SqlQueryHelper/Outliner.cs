@@ -38,6 +38,7 @@ namespace SqlQueryHelper
 
         // Chars to just remove from the end of the query
         private static readonly char[] RemoveChars = new [] {'\r', '\n', ';'};
+        public static string LastError;
 
         public static string FirstCommand(string query)
         {
@@ -74,18 +75,27 @@ namespace SqlQueryHelper
             var result = parser.Parse(new StringReader(query), out errors);
 
             // cannot parse, cannot simplify
-            if(errors.Count > 0)
+            if (errors.Count > 0)
+            {
+                LastError = "Cannot parse";
                 return false;
+            }
 
             // without at least one batch with at least one statement, cannot simplify
             // (should be 1 batch, 1 statement really as we are tracing StatementEnd)
             var script = result as TSqlScript;
             if (script == null || script.Batches.Count <= 0 && script.Batches[0].Statements.Count <= 0)
+            {
+                LastError = "Not 1 batch 1 statement";
                 return false;
+            }
 
             // only interested in certain types of statements (date manipulation ones)
             if (!HandledStatementType.Contains(script.Batches[0].Statements[0].GetType()))
+            {
+                LastError = "Not handled statement";
                 return false;
+            }
 
             // basically remove all comments, newlines and extra whitespace
             var options = new SqlScriptGeneratorOptions

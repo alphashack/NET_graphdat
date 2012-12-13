@@ -18,7 +18,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
-        private string _workDirectory;
+        private readonly string _workDirectory;
 
         public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
@@ -40,7 +40,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
         private void Exit(string message)
         {
-            _eventLog.WriteEntry(message);
+            _eventLog.WriteEntry(message, EventLogEntryType.Error);
             _thread = null;
             _instance = null;
             InvokeStopping(new SqlTraceService.StoppingEventArgs { Reason = message });
@@ -87,15 +87,13 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         {
             try
             {
-                var instances = new Dictionary<string, TraceInfo>();
-                int timeToWait = Properties.Settings.Default.SqlTraceReaderWorkerLoopSleep;
+                DeleteOldTraces(_workDirectory);
 
-                bool dont = true;
+                var instances = new Dictionary<string, TraceInfo>();
+                int timeToWait;
 
                 do
                 {
-                    if (dont) continue;
-
                     var processingStart = Stopwatch.StartNew();
 
                     FindInstanceTraces(instances);
@@ -114,14 +112,34 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             }
         }
 
+        private void DeleteOldTraces(string dir)
+        {
+            foreach (var trace in Directory.EnumerateFiles(dir, "graphdat_*.trc"))
+            {
+                try
+                {
+                    File.Delete(trace);
+                }
+                catch (Exception ex)
+                {
+                    _eventLog.WriteEntry(string.Format("Failed to delete old trace file ({0}). {1}", trace, ex.Message), EventLogEntryType.Warning);
+                }
+            }
+        }
+
         private void FindInstanceTraces(Dictionary<string, TraceInfo> instances)
         {
             var files = Directory.GetFiles(_workDirectory, @"graphdat*.trc");
-            var regex = new Regex(string.Format(@"^{0}\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$", _workDirectory.Replace(@"\", @"\\")));
+            var regex = new Regex(string.Format(@"^{0}\\graphdat_((?<instanceName>.*)_(?<fileNumber>\d+)\.trc|(?<instanceName>.*)\.trc)$", Regex.Escape(_workDirectory)));
+            DebugHelper.LogEntry(_eventLog, string.Format("{0} instance traces found", files.Length));
             foreach (var file in files)
             {
                 var match = regex.Match(file);
-                if (!match.Success || !match.Groups["instanceName"].Success) continue;
+                if (!match.Success || !match.Groups["instanceName"].Success)
+                {
+                    DebugHelper.LogEntry(_eventLog, string.Format("File '{0}' regex failed: match {1}, group {2}", file, match.Success, match.Groups["instanceName"].Success));
+                    continue;
+                }
                 var instanceName = match.Groups["instanceName"].Value;
                 var fileNumber = match.Groups["fileNumber"].Success
                                      ? int.Parse(match.Groups["fileNumber"].Value)
@@ -129,12 +147,18 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
 
                 if (!instances.ContainsKey(instanceName))
                 {
+                    DebugHelper.LogEntry(_eventLog, string.Format("First instance trace: {0} ({1})", instanceName, fileNumber));
                     instances[instanceName] = new TraceInfo { MaxFileNumber = fileNumber };
                 }
                 else if (instances[instanceName].MaxFileNumber < fileNumber)
                 {
+                    DebugHelper.LogEntry(_eventLog, string.Format("New instance trace: {0} ({1})", instanceName, fileNumber));
                     instances[instanceName].TraceRead = false;
                     instances[instanceName].MaxFileNumber = fileNumber;
+                }
+                else
+                {
+                    DebugHelper.LogEntry(_eventLog, string.Format("Old instance trace: {0} ({1}, last: {2})", instanceName, fileNumber, instances[instanceName].MaxFileNumber));                    
                 }
             }
         }
@@ -150,8 +174,10 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 var fileNumberToRead = instance.Value.MaxFileNumber - 1;
                 if (fileNumberToRead < 0) continue;
 
+                DebugHelper.LogEntry(_eventLog, string.Format("Read instance trace: {0}", instance.Key));
+
                 var filename = string.Format(string.Format("{0}\\graphdat_{1}{2}{3}.trc",
-                    _workDirectory.Replace(@"\", @"\\"),
+                    _workDirectory,
                     instance.Key,
                     fileNumberToRead > 0 ? "_" : "",
                     fileNumberToRead > 0 ? fileNumberToRead.ToString() : ""));
@@ -192,13 +218,20 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 // if the query simplified, send it to the agent
                 string name;
                 if (Outliner.TrySimplify(textData, out name))
+                {
                     _agentConnect.Store(new Sample
-                    {
-                        //Method = databaseName,
-                        Uri = name,
-                        ResponseTime = duration,
-                        Timestamp = startTime.Ticks
-                    }, Logger);
+                                            {
+                                                //Method = databaseName,
+                                                Uri = name,
+                                                ResponseTime = duration,
+                                                Timestamp = startTime.Ticks
+                                            }, Logger);
+                    DebugHelper.LogEntry(_eventLog, string.Format("Data sent: '{0}'", textData), EventLogEntryType.SuccessAudit);
+                }
+                else
+                {
+                    DebugHelper.LogEntry(_eventLog, string.Format("Could not simplify '{0}': {1}", textData, Outliner.LastError), EventLogEntryType.Warning);
+                }
             }
             traceFile.Close();
         }

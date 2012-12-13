@@ -22,6 +22,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphdatSqlTrace", "GraphdatSqlTrace\GraphdatSqlTrace.csproj", "{82EBA94F-4848-4205-A1CC-115F1DD60203}"
 EndProject
 Project("{040ECBDE-118F-47B7-BE98-E6E3FFCE59D0}") = "SqlTraceInstaller", "SqlTraceInstaller\SqlTraceInstaller.nsisproj", "{8F6BE5A9-6D90-415F-86DE-D575987BACF8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{82EBA94F-4848-4205-A1CC-115F1DD60203} = {82EBA94F-4848-4205-A1CC-115F1DD60203}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

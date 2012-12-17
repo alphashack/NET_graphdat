@@ -140,7 +140,8 @@ SetCompressor /SOLID LZMA
 		File "..\GraphdatSqlTrace\bin\Debug\${PROGRAM_NAME}"
 		File "..\GraphdatSqlTrace\bin\Debug\GraphdatAgentConnect.dll"
 		File "..\GraphdatSqlTrace\bin\Debug\MsgPack.dll"
-		File "..\GraphdatSqlTrace\bin\Debug\SqlQueryHelper.dll"
+		File "..\GraphdatSqlTrace\bin\Debug\GraphdatAgentSqlQueryHelper.dll"
+		File "..\GraphdatSqlTrace\lib\Gehtsoft.PCRE.dll"
 
 		File "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Microsoft.Data.Schema.ScriptDom.dll"
 		File "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VSTSDB\Microsoft.Data.Schema.ScriptDom.Sql.dll"
@@ -279,10 +280,27 @@ SetCompressor /SOLID LZMA
 		Delete "$INSTDIR\${PROGRAM_NAME}.config"
 		Delete "$INSTDIR\GraphdatAgentConnect.dll"
 		Delete "$INSTDIR\MsgPack.dll"
-		Delete "$INSTDIR\SqlQueryHelper.dll"
+		Delete "$INSTDIR\GraphdatAgentSqlQueryHelper.dll"
 		Delete "$INSTDIR\README.md"
 		Delete "$INSTDIR\GraphdatAgentSqlTrace.InstallLog"
 		Delete "$INSTDIR\InstallUtil.InstallLog"
+		Delete "$INSTDIR\Gehtsoft.PCRE.dll"
+
+		Delete "$INSTDIR\Microsoft.Data.Schema.ScriptDom.dll"
+		Delete "$INSTDIR\Microsoft.Data.Schema.ScriptDom.Sql.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.ConnectionInfo.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.ConnectionInfoExtended.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Diagnostics.STrace.dll"
+		Delete "$INSTDIR\Assemblies\Microsoft.SqlServer.Dmf.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Management.Sdk.Sfc.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Management.SmoMetadataProvider.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Management.SqlParser.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.ServiceBrokerEnum.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Smo.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.SqlClrProvider.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.SqlEnum.dll"
+
+		Delete "$INSTDIR\Microsoft.SqlServer.InstApi.dll"
 
 		;remove directories used.
 		RMDir "$INSTDIR"

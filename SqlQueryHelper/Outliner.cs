@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Data.Schema.ScriptDom;
 using Microsoft.Data.Schema.ScriptDom.Sql;
 
-namespace SqlQueryHelper
+namespace Alphashack.Graphdat.Agent.SqlQueryHelper
 {
     public static class Outliner
     {

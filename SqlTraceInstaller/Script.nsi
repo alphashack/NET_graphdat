@@ -291,7 +291,7 @@ SetCompressor /SOLID LZMA
 		Delete "$INSTDIR\Microsoft.SqlServer.ConnectionInfo.dll"
 		Delete "$INSTDIR\Microsoft.SqlServer.ConnectionInfoExtended.dll"
 		Delete "$INSTDIR\Microsoft.SqlServer.Diagnostics.STrace.dll"
-		Delete "$INSTDIR\Assemblies\Microsoft.SqlServer.Dmf.dll"
+		Delete "$INSTDIR\Microsoft.SqlServer.Dmf.dll"
 		Delete "$INSTDIR\Microsoft.SqlServer.Management.Sdk.Sfc.dll"
 		Delete "$INSTDIR\Microsoft.SqlServer.Management.SmoMetadataProvider.dll"
 		Delete "$INSTDIR\Microsoft.SqlServer.Management.SqlParser.dll"
@@ -301,6 +301,8 @@ SetCompressor /SOLID LZMA
 		Delete "$INSTDIR\Microsoft.SqlServer.SqlEnum.dll"
 
 		Delete "$INSTDIR\Microsoft.SqlServer.InstApi.dll"
+
+		Delete "$INSTDIR\*.trc"
 
 		;remove directories used.
 		RMDir "$INSTDIR"

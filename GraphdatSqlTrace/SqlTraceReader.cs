@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Alphashack.Graphdat.Agent.SqlQueryHelper;
 using Microsoft.SqlServer.Management.Trace;
-using SqlQueryHelper;
 
 namespace Alphashack.Graphdat.Agent.SqlTrace
 {
@@ -19,6 +19,7 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
         private Thread _thread;
         private readonly EventWaitHandle _termHandle;
         private readonly string _workDirectory;
+        private readonly Parser _parser;
 
         public static event EventHandler<SqlTraceService.StoppingEventArgs> Stopping;
 
@@ -57,6 +58,8 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
             {
                 _eventLog = eventLog;
                 _workDirectory = workDirectory;
+
+                _parser = new Parser();
 
                 _agentConnect = new Connect();
                 _agentConnect.Init(Properties.Settings.Default.Port.ToString(), Properties.Settings.Default.Source,
@@ -213,26 +216,19 @@ namespace Alphashack.Graphdat.Agent.SqlTrace
                 var textData = traceFile.GetString(textDataOrdinal);
                 //var databaseName = traceFile.GetString(databaseNameOrdinal);
                 var startTime = traceFile.GetDateTime(startTimeOrdinal);
-                var duration = traceFile.GetInt64(durationOrdinal) / 1000; // duration is in microseconds
+                var duration = traceFile.GetInt64(durationOrdinal)/1000; // duration is in microseconds
 
-                // if the query simplified, send it to the agent
-                string name;
-                if (Outliner.TrySimplify(textData, out name))
-                {
-                    _agentConnect.Store(new Sample
-                                            {
-                                                //Method = databaseName,
-                                                Uri = name,
-                                                ResponseTime = duration,
-                                                Timestamp = startTime.Ticks
-                                            }, Logger);
-                    DebugHelper.LogEntry(_eventLog, string.Format("Data sent: '{0}'", textData), EventLogEntryType.SuccessAudit);
-                }
-                else
-                {
-                    DebugHelper.LogEntry(_eventLog, string.Format("Could not simplify '{0}': {1}", textData, Outliner.LastError), EventLogEntryType.Warning);
-                }
+                // send the canonical query to the agent
+                _agentConnect.Store(new Sample
+                                        {
+                                            //Method = databaseName,
+                                            Uri = _parser.Rewrite(textData),
+                                            ResponseTime = duration,
+                                            Timestamp = startTime.Ticks
+                                        }, Logger);
+                DebugHelper.LogEntry(_eventLog, string.Format("Data sent: '{0}'", textData), EventLogEntryType.SuccessAudit);
             }
+
             traceFile.Close();
         }
 

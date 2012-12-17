@@ -43,15 +43,6 @@ namespace Alphashack.Graphdat.Agent.SqlTrace.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("400")]
-        public int SqlTraceReaderWorkerLoopSleep {
-            get {
-                return ((int)(this["SqlTraceReaderWorkerLoopSleep"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10000")]
         public int SqlTraceManagerWorkerLoopSleep {
             get {
@@ -61,7 +52,16 @@ namespace Alphashack.Graphdat.Agent.SqlTrace.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("4000")]
+        public int SqlTraceReaderWorkerLoopSleep {
+            get {
+                return ((int)(this["SqlTraceReaderWorkerLoopSleep"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool Debug {
             get {
                 return ((bool)(this["Debug"]));

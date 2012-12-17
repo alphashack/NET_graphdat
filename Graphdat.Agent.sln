@@ -26,7 +26,19 @@ Project("{040ECBDE-118F-47B7-BE98-E6E3FFCE59D0}") = "SqlTraceInstaller", "SqlTra
 		{82EBA94F-4848-4205-A1CC-115F1DD60203} = {82EBA94F-4848-4205-A1CC-115F1DD60203}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlQueryHelperTests", "TestProject1\SqlQueryHelperTests.csproj", "{FBDF3A8D-7446-4771-96EA-17C271D1E49C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3697A388-536F-45AD-A379-A90BDEE2C01F}"
+	ProjectSection(SolutionItems) = preProject
+		Graphdat.Agent.vsmdi = Graphdat.Agent.vsmdi
+		Local.testsettings = Local.testsettings
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Graphdat.Agent.vsmdi
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CodeAnalysis|Any CPU = CodeAnalysis|Any CPU
 		CodeAnalysis|Mixed Platforms = CodeAnalysis|Mixed Platforms
@@ -450,6 +462,42 @@ Global
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|Win32.ActiveCfg = Release|x86
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|x86.ActiveCfg = Release|x86
 		{8F6BE5A9-6D90-415F-86DE-D575987BACF8}.Release|x86.Build.0 = Release|x86
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|Any CPU.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|Mixed Platforms.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|Win32.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CodeAnalysis|x86.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|Any CPU.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|Mixed Platforms.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|Win32.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.CoreProfile|x86.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|Any CPU.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|Mixed Platforms.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|Win32.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Instrument|x86.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|Any CPU.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|Mixed Platforms.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|Win32.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.PerformanceTest|x86.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|Win32.ActiveCfg = Release|Any CPU
+		{FBDF3A8D-7446-4771-96EA-17C271D1E49C}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

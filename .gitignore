@@ -8,3 +8,6 @@ TestResults
 *.user
 _ReSharper*
 *.suo
+
+*.trc
+App_Data

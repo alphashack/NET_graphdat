@@ -9,7 +9,7 @@ namespace Alphashack.Graphdat.Agent
 {
     public class Connect : IConnect
     {
-        public const bool VerboseLogging = true;
+        public const bool VerboseLogging = false;
         private const int GraphdatWorkerLoopSleep = 100;
 
         private string _source;
@@ -69,7 +69,7 @@ namespace Alphashack.Graphdat.Agent
                           {
                               Type = "Sample",
                               Source = _source,
-                              Route = string.Format("{0} {1}", sample.Method, sample.Uri),
+                              Route = !string.IsNullOrEmpty(sample.Method) ? string.Format("{0} {1}", sample.Method, sample.Uri) : sample.Uri,
                               Timestamp = sample.Timestamp,
                               ResponseTime = sample.ResponseTime,
                               CpuTime = sample.CpuTime,

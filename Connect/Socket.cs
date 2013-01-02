@@ -25,7 +25,38 @@ namespace Alphashack.Graphdat.Agent
             }
         }
 
-        public void Send(byte[] data, long datalen, LoggerDelegate logger, object logContext)
+        public void SendHeartbeat(LoggerDelegate logger = null, object logContext = null)
+        {
+            if (!Connect(logger, logContext)) return;
+
+            try
+            {
+                Int32 intdatalen = Convert.ToInt32(0);
+                Int32 netdatalen = IPAddress.HostToNetworkOrder(intdatalen);
+                _socket.Send(BitConverter.GetBytes(netdatalen), sizeof(Int32), SocketFlags.None);
+
+                if (!_lastwritesuccess)
+                {
+                    if (logger != null) logger(GraphdatLogType.SuccessMessage, logContext, "graphdat: sending data on socket '{0}'", _config);
+                    _lastwritesuccess = true;
+                }
+                _lastwaserror = false;
+
+                if (Agent.Connect.VerboseLogging)
+                {
+                    if (logger != null) logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket sent heartbeat to '{0}'", _config);
+                }
+            }
+            catch (Exception ex)
+            {
+                Term(logger, logContext);
+                _lastwritesuccess = false;
+                if (logger != null) logger(GraphdatLogType.ErrorMessage, logContext, "graphdat error: could not write socket '{0}' - {1}",
+                       _config, ex.Message);
+            }
+        }
+
+        public void Send(byte[] data, long datalen, LoggerDelegate logger = null, object logContext = null)
         {
             if (!Connect(logger, logContext)) return;
 
@@ -38,14 +69,14 @@ namespace Alphashack.Graphdat.Agent
 
                 if (!_lastwritesuccess)
                 {
-                    logger(GraphdatLogType.SuccessMessage, logContext, "graphdat: sending data on socket '{0}'", _config);
+                    if(logger != null) logger(GraphdatLogType.SuccessMessage, logContext, "graphdat: sending data on socket '{0}'", _config);
                     _lastwritesuccess = true;
                 }
                 _lastwaserror = false;
 
                 if (Agent.Connect.VerboseLogging)
                 {
-                    logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket sent {0} bytes to '{1}'", sent, _config);
+                    if (logger != null) logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket sent {0} bytes to '{1}'", sent, _config);
                 }
             }
             catch (Exception ex)
@@ -61,7 +92,7 @@ namespace Alphashack.Graphdat.Agent
                 {
                     message = ex.Message;
                 }
-                logger(GraphdatLogType.ErrorMessage, logContext, "graphdat error: could not write socket '{0}' - {1}",
+                if (logger != null) logger(GraphdatLogType.ErrorMessage, logContext, "graphdat error: could not write socket '{0}' - {1}",
                        _config, message);
             }
         }
@@ -87,7 +118,7 @@ namespace Alphashack.Graphdat.Agent
 
                 if (Agent.Connect.VerboseLogging)
                 {
-                    logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket connected '{0}'",
+                    if (logger != null) logger(GraphdatLogType.InformationMessage, logContext, "graphdat info: socket connected '{0}'",
                            _config);
                 }
 
@@ -98,7 +129,7 @@ namespace Alphashack.Graphdat.Agent
                 Term(logger, logContext);
                 if (!_lastwaserror || Agent.Connect.VerboseLogging)
                 {
-                    logger(GraphdatLogType.ErrorMessage, logContext,
+                    if (logger != null) logger(GraphdatLogType.ErrorMessage, logContext,
                            "graphdat error: could not connect socket '{0}' - {1}", _config, ex.Message);
                     _lastwaserror = true;
                 }

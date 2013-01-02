@@ -17,6 +17,8 @@ namespace Alphashack.Graphdat.Agent
         private EventWaitHandle _termHandle;
         private Thread _thread;
         private ConcurrentQueue<Item> _queue;
+        private DateTime _lastHeartbeat = DateTime.Now;
+        private readonly TimeSpan _heartbeatInterval = new TimeSpan(0, 0, 30);
 
         private class Item
         {
@@ -135,19 +137,42 @@ namespace Alphashack.Graphdat.Agent
         private void Worker()
         {
             int sleep;
+            var hasSentData = false;
             do
             {
                 Item item;
                 if(_queue.TryDequeue(out item))
                 {
                     Send(item);
+                    hasSentData = true;
                     sleep = 0;
                 }
                 else
                 {
+                    Heartbeat(hasSentData);
                     sleep = GraphdatWorkerLoopSleep;
+                    hasSentData = false;
                 }
             } while (!_termHandle.WaitOne(sleep));
+        }
+
+        private void Heartbeat(bool hasSentData)
+        {
+            var now = DateTime.Now;
+
+            if(!hasSentData && now - _lastHeartbeat > _heartbeatInterval)
+            {
+                SendHeartbeat();
+                hasSentData = true;
+            }
+
+            if (hasSentData)
+                _lastHeartbeat = now;
+        }
+
+        private void SendHeartbeat()
+        {
+            _socket.SendHeartbeat();
         }
     }
 }

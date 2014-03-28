@@ -1,4 +1,5 @@
-NET_graphdat
-============
+# Graphdat .NET SDK
 
-Send samples to the graphdat agent from .NET (module_graphdat for .NET)
+*Send custom timing data from your .NET app*
+
+--
